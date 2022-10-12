@@ -141,19 +141,19 @@ public class CDVInstagramPlugin extends CordovaPlugin {
                 shareIntent.putExtra("interactive_asset_uri", photoURI);
                 shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                this.cordova.grantUriPermission(
-                    "com.instagram.android", photoURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                // this.cordova.grantUriPermission(
+                //     "com.instagram.android", photoURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
             }
 
             shareIntent.putExtra("top_background_color", "#33FF33");
             shareIntent.putExtra("bottom_background_color", "#FF00FF");
 
-            if (this.cordova.getPackageManager().resolveActivity(shareIntent, 0) != null) {
-              this.cordova.startActivityForResult(shareIntent, 0);
-            }
+            // if (this.cordova.getPackageManager().resolveActivity(shareIntent, 0) != null) {
+            //   this.cordova.startActivityForResult(shareIntent, 0);
+            // }
 
-            // this.cordova.startActivityForResult((CordovaPlugin) this, Intent.createChooser(shareIntent, "Share to"), 12345);   
+            this.cordova.startActivityForResult((CordovaPlugin) this, Intent.createChooser(shareIntent, "Share to"), 12345);   
         } else {
             this.cbContext.error("Expected one non-empty string argument.");
         }
