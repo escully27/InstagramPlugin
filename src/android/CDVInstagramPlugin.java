@@ -119,8 +119,12 @@ public class CDVInstagramPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            Intent shareIntent = new Intent("com.instagram.share.ADD_TO_STORY");
             shareIntent.setType("image/*");
+
+            String sourceApplication = "185247702313787"; // This is your application's FB ID
+            intent.putExtra("source_application", sourceApplication);
+
 
             if (Build.VERSION.SDK_INT < 26) {
                 // Handle the file uri with pre Oreo method    
@@ -134,14 +138,22 @@ public class CDVInstagramPlugin extends CordovaPlugin {
                         this.cordova.getActivity().getPackageName() + ".provider",
                         file);
 
-                shareIntent.putExtra(Intent.EXTRA_STREAM, photoURI);
+                shareIntent.putExtra("interactive_asset_uri", photoURI);
                 shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                this.cordova.grantUriPermission(
+                    "com.instagram.android", photoURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
             }
 
-            shareIntent.putExtra(Intent.EXTRA_TEXT, captionString);
-            shareIntent.setPackage("com.instagram.android");
+            shareIntent.putExtra("top_background_color", "#33FF33");
+            shareIntent.putExtra("bottom_background_color", "#FF00FF");
 
-            this.cordova.startActivityForResult((CordovaPlugin) this, Intent.createChooser(shareIntent, "Share to"), 12345);   
+            if (this.cordova.getPackageManager().resolveActivity(shareIntent, 0) != null) {
+              this.cordova.startActivityForResult(shareIntent, 0);
+            }
+
+            // this.cordova.startActivityForResult((CordovaPlugin) this, Intent.createChooser(shareIntent, "Share to"), 12345);   
         } else {
             this.cbContext.error("Expected one non-empty string argument.");
         }
