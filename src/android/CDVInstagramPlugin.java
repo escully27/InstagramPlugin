@@ -58,20 +58,23 @@ public class CDVInstagramPlugin extends CordovaPlugin {
     };
 
     CallbackContext cbContext;
-    
+
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-        
+
         this.cbContext = callbackContext;
-        
+
+        Log.v("Instagram", "execute thing?? " + action);
+
         if (action.equals("share")) {
             String imageString = args.getString(0);
             String captionString = args.getString(1);
+            String postURL = args.getString(2);
 
             PluginResult result = new PluginResult(Status.NO_RESULT);
             result.setKeepCallback(true);
 
-            this.share(imageString, captionString);
+            this.share(imageString, captionString, postURL);
             return true;
         } else if (action.equals("isInstalled")) {
             this.isInstalled();
@@ -80,7 +83,7 @@ public class CDVInstagramPlugin extends CordovaPlugin {
         }
         return false;
     }
-    
+
     private void isInstalled() {
         try {
             this.webView.getContext().getPackageManager().getApplicationInfo("com.instagram.android", 0);
@@ -90,13 +93,13 @@ public class CDVInstagramPlugin extends CordovaPlugin {
         }
     }
 
-    private void share(String imageString, String captionString) {
-        if (imageString != null && imageString.length() > 0) { 
+    private void share(String imageString, String captionString, String postURL) {
+        if (imageString != null && imageString.length() > 0) {
             byte[] imageData = Base64.decode(imageString, 0);
-            
-            File file = null;  
+
+            File file = null;
             FileOutputStream os = null;
-            
+
             File parentDir = this.webView.getContext().getExternalFilesDir(null);
             File[] oldImages = parentDir.listFiles(OLD_IMAGE_FILTER);
             for (File oldImage : oldImages) {
@@ -110,6 +113,8 @@ public class CDVInstagramPlugin extends CordovaPlugin {
                 e.printStackTrace();
             }
 
+            Log.v("Instagram", "file created thing??");
+
             try {
                 os.write(imageData);
                 os.flush();
@@ -120,17 +125,13 @@ public class CDVInstagramPlugin extends CordovaPlugin {
             }
 
             Intent shareIntent = new Intent("com.instagram.share.ADD_TO_STORY");
-            shareIntent.setType("image/*");
-
-            String sourceApplication = "185247702313787"; // This is your application's FB ID
-            shareIntent.putExtra("source_application", sourceApplication);
+            shareIntent.setType("image/jpeg");
 
 
-            if (Build.VERSION.SDK_INT < 26) {
-                // Handle the file uri with pre Oreo method    
-                shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
-            } else {
-                // Handle the file URI using Android Oreo file provider
+            Log.v("Instagram", "intent added to story thing??");
+            Activity activity = this.cordova.getActivity();
+
+
                 FileProvider FileProvider = new FileProvider();
 
                 Uri photoURI = FileProvider.getUriForFile(
@@ -138,27 +139,40 @@ public class CDVInstagramPlugin extends CordovaPlugin {
                         this.cordova.getActivity().getPackageName() + ".provider",
                         file);
 
+
+
                 shareIntent.putExtra("interactive_asset_uri", photoURI);
                 shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                Log.v("Instagram", "URI: " + photoURI);
 
-                // this.cordova.grantUriPermission(
-                //     "com.instagram.android", photoURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                activity.grantUriPermission(
+                        "com.instagram.android", photoURI, Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
+
+            Log.v("Instagram", "share activity starting");
+
+            shareIntent.putExtra("top_background_color", "#3A3A3A");
+            shareIntent.putExtra("bottom_background_color", "#3A3A3A");
+
+            if (postURL != null) {
+                shareIntent.putExtra("content_url", postURL);
+            } else {
+                shareIntent.putExtra("content_url", "https://trackster.us/download");
             }
 
-            shareIntent.putExtra("top_background_color", "#33FF33");
-            shareIntent.putExtra("bottom_background_color", "#FF00FF");
 
-            // if (this.cordova.getPackageManager().resolveActivity(shareIntent, 0) != null) {
-            //   this.cordova.startActivityForResult(shareIntent, 0);
-            // }
+            if (activity.getPackageManager().resolveActivity(shareIntent, 0) != null) {
 
-            this.cordova.startActivityForResult((CordovaPlugin) this, Intent.createChooser(shareIntent, "Share to"), 12345);   
+                Log.v("Instagram", "share actually activity starting");
+                activity.startActivityForResult(shareIntent, 0);
+            }
+
+//            this.cordova.startActivityForResult((CordovaPlugin) this, Intent.createChooser(shareIntent, "Share to"), 12345);
         } else {
             this.cbContext.error("Expected one non-empty string argument.");
         }
     }
-    
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == Activity.RESULT_OK) {
