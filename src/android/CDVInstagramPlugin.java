@@ -123,7 +123,7 @@ public class CDVInstagramPlugin extends CordovaPlugin {
             shareIntent.setType("image/*");
 
             String sourceApplication = "185247702313787"; // This is your application's FB ID
-            intent.putExtra("source_application", sourceApplication);
+            shareIntent.putExtra("source_application", sourceApplication);
 
 
             if (Build.VERSION.SDK_INT < 26) {
